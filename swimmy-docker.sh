@@ -54,11 +54,11 @@ function main(){
 }
 
 function user_is_member_of_dockergroup(){
-    res=$(groups | grep -c -e docker -e root)
-    if [ $res = 0 ]; then
+    if [ $(groups | grep -c -e docker -e root) = 0 ]; then
         return 1
+    else
+        return 0
     fi
-    return 0
 }
 
 function start(){
@@ -66,13 +66,14 @@ function start(){
         echo "swimmy has already started"
     else
         echo -n "try to start swimmy..."
-        docker run -d --name swimmy \
-            -v $PWD/.env:/root/swimmy/.env \
+        if docker run -d --name swimmy \
+            -v $PWD/.env:/root/.env \
             -v $HOME/.config/sheetq/:/root/.config/sheetq \
             swimmy >/dev/null
-        if [ $? = 0 ]; then
+        then
             echo "done."
         else
+            echo "failed."
             exit 1
         fi
     fi
@@ -82,10 +83,10 @@ function stop(){
     if is_container_running swimmy; then
         echo -n "try to stop swimmy..."
         docker stop swimmy >/dev/null
-        docker rm swimmy >/dev/null
-        if [ $? = 0 ]; then
+        if docker rm swimmy >/dev/null; then
             echo "done."
         else
+            echo "failed."
             exit 1
         fi
     else
@@ -102,8 +103,7 @@ function status(){
 }
 
 function is_container_running(){
-    res=$(docker ps -a --format "table {{.Names}}" |grep -cx "$1")
-    if [ $res = 0 ]; then
+    if [ $(docker ps -a --format "table {{.Names}}" |grep -cx "$1") = 0 ]; then
         return 1
     else
         return 0
